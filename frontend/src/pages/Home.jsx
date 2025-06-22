@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsP
 import { format } from 'date-fns';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.API_URL || 'http://localhost:5000';
 
 const Home = () => {
   const { user } = useAuth();
@@ -21,12 +21,11 @@ const Home = () => {
   useEffect(() => {
     setGreeting(getTimeBasedGreeting());
     loadQuote();
-    loadDetailedStats();
-    fetchDashboardAndTimetables();
   }, []);
 
   useEffect(() => {
     loadDetailedStats();
+    fetchDashboardAndTimetables();
   }, [statsFilter, selectedSubject]);
 
   const getTimeBasedGreeting = () => {
@@ -123,7 +122,7 @@ const Home = () => {
   const statsCards = [
     {
       title: 'Today\'s Reading',
-      value: `${studyData.todayReading || 0} minutes`,
+      value: `${studyData.todayReading || 0} min`,
       icon: Clock,
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50 dark:bg-purple-900/20'
@@ -137,7 +136,7 @@ const Home = () => {
     },
     {
       title: 'Current Streak',
-      value: `${studyData.currentStreak || 0} days`,
+      value: `${studyData.currentStreak || 0} 🔥`,
       icon: Target,
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900/20'

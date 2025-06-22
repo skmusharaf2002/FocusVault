@@ -29,7 +29,7 @@ export const StudyProvider = ({ children }) => {
   const [isStudying, setIsStudying] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.API_URL || 'http://localhost:5000';
 
   // Get token from localStorage
   const getToken = () => {
@@ -44,11 +44,11 @@ export const StudyProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboardAndTimetables();
-    fetchActiveSessions();
-    fetchCompletedSubjects();
-  }, []);
+  // useEffect(() => {
+  //   fetchDashboardAndTimetables();
+  //   fetchActiveSessions();
+  //   fetchCompletedSubjects();
+  // }, []);
 
   const fetchDashboardAndTimetables = async () => {
     try {
