@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
+import { useApiCache } from '../hooks/useApiCache';
 
 const StudyContext = createContext();
 
@@ -24,12 +25,12 @@ export const StudyProvider = ({ children }) => {
     completedSubjects: []
   });
 
-  const [activeSessions, setActiveSessions] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
   const [isStudying, setIsStudying] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [lastFetch, setLastFetch] = useState(0);
 
-  const API_URL = import.meta.env.API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   // Get token from localStorage
   const getToken = () => {
@@ -44,50 +45,76 @@ export const StudyProvider = ({ children }) => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   fetchDashboardAndTimetables();
-  //   fetchActiveSessions();
-  //   fetchCompletedSubjects();
-  // }, []);
+  // Cached dashboard data fetcher
+  const dashboardFetcher = useCallback(async (signal) => {
+    const response = await axios.get(`${API_URL}/api/study/dashboard`, { signal });
+    return response.data;
+  }, [API_URL]);
 
-  const fetchDashboardAndTimetables = async () => {
-    try {
-      const [dashboardRes, timetableRes] = await Promise.all([
-        axios.get(`${API_URL}/api/study/dashboard`),
-        axios.get(`${API_URL}/api/study/timetables`)
-      ]);
-      const active = timetableRes.data.find(t => t.isActive);
+  // Cached timetables fetcher
+  const timetablesFetcher = useCallback(async (signal) => {
+    const response = await axios.get(`${API_URL}/api/study/timetables`, { signal });
+    return response.data;
+  }, [API_URL]);
+
+  // Use cached API calls
+  const {
+    data: dashboardData,
+    loading: dashboardLoading,
+    invalidateCache: invalidateDashboard
+  } = useApiCache('dashboard', dashboardFetcher, []);
+
+  const {
+    data: timetablesData,
+    loading: timetablesLoading,
+    invalidateCache: invalidateTimetables
+  } = useApiCache('timetables', timetablesFetcher, []);
+
+  // Update study data when cached data changes
+  useEffect(() => {
+    if (dashboardData) {
       setStudyData(prev => ({
         ...prev,
-        ...dashboardRes.data,
-        timetables: timetableRes.data,
+        ...dashboardData
+      }));
+    }
+  }, [dashboardData]);
+
+  useEffect(() => {
+    if (timetablesData) {
+      const active = timetablesData.find(t => t.isActive);
+      setStudyData(prev => ({
+        ...prev,
+        timetables: timetablesData,
         activeTimetable: active
       }));
-    } catch (err) {
-      console.error('Failed to fetch dashboard/timetables:', err);
     }
-  };
+  }, [timetablesData]);
 
-  const fetchActiveSessions = async () => {
+  // Optimized fetch functions with rate limiting
+  const fetchDashboardAndTimetables = useCallback(async () => {
+    const now = Date.now();
+    // Prevent rapid successive calls (rate limiting)
+    if (now - lastFetch < 2000) return;
+
+    setLastFetch(now);
+    invalidateDashboard();
+    invalidateTimetables();
+  }, [lastFetch, invalidateDashboard, invalidateTimetables]);
+
+  const fetchCurrentSession = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/study/state`);
-      setActiveSessions(res.data || []);
-
-      // Set current session to the most recent active one
-      const activeSession = res.data.find(session => session.status === 'active');
-      if (activeSession) {
-        setCurrentSession(activeSession);
-        setIsStudying(true);
-      } else {
-        setCurrentSession(null);
-        setIsStudying(false);
+      if (res.data?.currentSubject) {
+        setCurrentSession(res.data);
+        setIsStudying(res.data.status === 'active');
       }
     } catch (err) {
-      console.error('Failed to fetch active sessions:', err);
+      console.error('Failed to fetch session state:', err);
     }
-  };
+  }, [API_URL]);
 
-  const fetchCompletedSubjects = async () => {
+  const fetchCompletedSubjects = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/study/sessions/today`);
       setStudyData(prev => ({
@@ -101,172 +128,93 @@ export const StudyProvider = ({ children }) => {
         completedSubjects: []
       }));
     }
-  };
+  }, [API_URL]);
 
-  const fetchSessionStats = async (period = 'week', subject = null) => {
+  // Initial data fetch
+  useEffect(() => {
+    fetchCurrentSession();
+    fetchCompletedSubjects();
+  }, [fetchCurrentSession, fetchCompletedSubjects]);
+
+  const fetchSessionStats = useCallback(async (period = 'week') => {
     try {
-      const params = new URLSearchParams({ period });
-      if (subject) params.append('subject', subject);
-
-      const res = await axios.get(`${API_URL}/api/study/sessions/stats?${params.toString()}`);
+      const res = await axios.get(`${API_URL}/api/study/sessions/stats`, {
+        params: { period }
+      });
       return res.data;
     } catch (err) {
       console.error('Failed to fetch session stats:', err);
       return null;
     }
-  };
+  }, [API_URL]);
 
-  const startStudySession = async (subject, targetTime = 3600) => {
+  const startStudySession = useCallback(async (subject) => {
+    const startTime = new Date();
     try {
-      const res = await axios.post(`${API_URL}/api/study/state/start`, {
-        subject,
-        targetTime
-      });
-
-      const newSession = res.data;
-      setCurrentSession(newSession);
-      setIsStudying(true);
-
-      // Update active sessions
-      setActiveSessions(prev => {
-        const filtered = prev.filter(s => s.subject !== subject);
-        return [newSession, ...filtered];
-      });
-
-      return newSession;
-    } catch (err) {
-      console.error('Failed to start session:', err);
-      throw err;
-    }
-  };
-
-  const pauseSession = async (sessionId = null) => {
-    try {
-      const targetSessionId = sessionId || currentSession?.sessionId;
-      if (!targetSessionId) return;
-
-      const res = await axios.put(`${API_URL}/api/study/state/${targetSessionId}`, {
-        status: 'paused'
-      });
-
-      const updatedSession = res.data;
-      setCurrentSession(updatedSession);
-      setIsStudying(false);
-
-      // Update active sessions
-      setActiveSessions(prev =>
-        prev.map(s => s.sessionId === targetSessionId ? updatedSession : s)
-      );
-
-      return updatedSession;
-    } catch (err) {
-      console.error('Failed to pause session:', err);
-      throw err;
-    }
-  };
-
-  const resumeSession = async (sessionId = null) => {
-    try {
-      const targetSessionId = sessionId || currentSession?.sessionId;
-      if (!targetSessionId) return;
-
-      const res = await axios.put(`${API_URL}/api/study/state/${targetSessionId}`, {
+      const res = await axios.post(`${API_URL}/api/study/state`, {
+        currentSubject: subject,
+        elapsedTime: 0,
+        startTime,
         status: 'active'
       });
-
-      const updatedSession = res.data;
-      setCurrentSession(updatedSession);
+      setCurrentSession(res.data);
       setIsStudying(true);
+    } catch (err) {
+      console.error('Failed to start session:', err);
+    }
+  }, [API_URL]);
 
-      // Update active sessions
-      setActiveSessions(prev =>
-        prev.map(s => s.sessionId === targetSessionId ? updatedSession : s)
-      );
+  const pauseSession = useCallback(async () => {
+    try {
+      await axios.post(`${API_URL}/api/study/state`, {
+        ...currentSession,
+        status: 'paused'
+      });
+      setCurrentSession(prev => ({ ...prev, status: 'paused' }));
+      setIsStudying(false);
+    } catch (err) {
+      console.error('Failed to pause session:', err);
+    }
+  }, [API_URL, currentSession]);
 
-      return updatedSession;
+  const resumeSession = useCallback(async () => {
+    try {
+      await axios.post(`${API_URL}/api/study/state`, {
+        ...currentSession,
+        status: 'active'
+      });
+      setCurrentSession(prev => ({ ...prev, status: 'active' }));
+      setIsStudying(true);
     } catch (err) {
       console.error('Failed to resume session:', err);
-      throw err;
     }
-  };
+  }, [API_URL, currentSession]);
 
-  const updateSessionTime = async (sessionId, elapsedTime) => {
+  const endSession = useCallback(async ({ actualTime, notes = '', targetTime }) => {
     try {
-      const res = await axios.put(`${API_URL}/api/study/state/${sessionId}`, {
-        elapsedTime
-      });
-
-      const updatedSession = res.data;
-      if (currentSession?.sessionId === sessionId) {
-        setCurrentSession(updatedSession);
-      }
-
-      // Update active sessions
-      setActiveSessions(prev =>
-        prev.map(s => s.sessionId === sessionId ? updatedSession : s)
-      );
-
-      return updatedSession;
-    } catch (err) {
-      console.error('Failed to update session time:', err);
-      throw err;
-    }
-  };
-
-  const endSession = async (sessionId = null, notes = '') => {
-    try {
-      const targetSessionId = sessionId || currentSession?.sessionId;
-      if (!targetSessionId) return;
-
-      await axios.post(`${API_URL}/api/study/state/${targetSessionId}/end`, {
+      const endTime = new Date();
+      await axios.post(`${API_URL}/api/study/sessions`, {
+        subject: currentSession.currentSubject,
+        actualTime,
+        targetTime,
+        startTime: currentSession.startTime,
+        endTime,
+        completed: true,
         notes
       });
+      await axios.delete(`${API_URL}/api/study/state`);
+      setCurrentSession(null);
+      setIsStudying(false);
 
-      // Clear current session if it was the one ended
-      if (currentSession?.sessionId === targetSessionId) {
-        setCurrentSession(null);
-        setIsStudying(false);
-      }
-
-      // Remove from active sessions
-      setActiveSessions(prev =>
-        prev.filter(s => s.sessionId !== targetSessionId)
-      );
-
-      // Refresh data
-      await Promise.all([
-        fetchDashboardAndTimetables(),
-        fetchCompletedSubjects()
-      ]);
-
+      // Refresh data after ending session
+      fetchDashboardAndTimetables();
+      fetchCompletedSubjects();
     } catch (err) {
       console.error('Failed to end session:', err);
-      throw err;
     }
-  };
+  }, [API_URL, currentSession, fetchDashboardAndTimetables, fetchCompletedSubjects]);
 
-  const cancelSession = async (sessionId) => {
-    try {
-      await axios.delete(`${API_URL}/api/study/state/${sessionId}`);
-
-      // Clear current session if it was the one cancelled
-      if (currentSession?.sessionId === sessionId) {
-        setCurrentSession(null);
-        setIsStudying(false);
-      }
-
-      // Remove from active sessions
-      setActiveSessions(prev =>
-        prev.filter(s => s.sessionId !== sessionId)
-      );
-
-    } catch (err) {
-      console.error('Failed to cancel session:', err);
-      throw err;
-    }
-  };
-
-  const fetchNotes = async (search = '', subject = '', page = 1, limit = 10) => {
+  const fetchNotes = useCallback(async (search = '', subject = '', page = 1, limit = 20) => {
     try {
       setLoadingNotes(true);
       const params = new URLSearchParams({ search, subject, page, limit });
@@ -277,47 +225,38 @@ export const StudyProvider = ({ children }) => {
     } finally {
       setLoadingNotes(false);
     }
-  };
-
-  // Helper functions for UI
-  const getPausedSessions = () => {
-    return activeSessions.filter(session => session.status === 'paused');
-  };
-
-  const getActiveSession = () => {
-    return activeSessions.find(session => session.status === 'active');
-  };
-
-  const getSessionBySubject = (subject) => {
-    return activeSessions.find(session => session.subject === subject);
-  };
+  }, [API_URL]);
 
   const value = useMemo(() => ({
     studyData,
-    activeSessions,
     currentSession,
     isStudying,
+    loading: dashboardLoading || timetablesLoading,
     startStudySession,
     pauseSession,
     resumeSession,
-    updateSessionTime,
     endSession,
-    cancelSession,
     fetchDashboardAndTimetables,
-    fetchActiveSessions,
+    fetchCurrentSession,
     fetchCompletedSubjects,
     fetchSessionStats,
     fetchNotes,
-    loadingNotes,
-    // Helper functions
-    getPausedSessions,
-    getActiveSession,
-    getSessionBySubject,
+    loadingNotes
   }), [
     studyData,
-    activeSessions,
     currentSession,
     isStudying,
+    dashboardLoading,
+    timetablesLoading,
+    startStudySession,
+    pauseSession,
+    resumeSession,
+    endSession,
+    fetchDashboardAndTimetables,
+    fetchCurrentSession,
+    fetchCompletedSubjects,
+    fetchSessionStats,
+    fetchNotes,
     loadingNotes
   ]);
 

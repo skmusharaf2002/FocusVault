@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Edit2, Save, X, Camera, Settings, Bell, Moon, Sun, Shield, LogOut, Trash2, BookOpen, HelpCircle, Info } from 'lucide-react';
+import { User, Edit2, Save, X, Camera, Settings, Bell, Moon, Sun, Shield, LogOut, Trash2, BookOpen, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +11,6 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [editingTimetableId, setEditingTimetableId] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -42,8 +41,7 @@ const Profile = () => {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'study', label: 'Study Settings', icon: BookOpen },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'help', label: 'Help & About', icon: HelpCircle }
+    { id: 'security', label: 'Security', icon: Shield }
   ];
 
   const studyTimes = [
@@ -79,31 +77,7 @@ const Profile = () => {
       setPreferences(user.preferences || preferences);
     }
     fetchTimetables();
-    
-    // Initialize dark mode from localStorage or system preference
-    const savedTheme = localStorage.getItem('theme');
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = savedTheme === 'dark' || (!savedTheme && systemDark);
-    setDarkMode(isDark);
-    updateTheme(isDark);
   }, [user]);
-
-  const updateTheme = (isDark) => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    updateTheme(newDarkMode);
-    setPreferences(prev => ({ ...prev, theme: newDarkMode ? 'dark' : 'light' }));
-  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -360,7 +334,7 @@ const Profile = () => {
         className="text-center"
       >
         <div className="relative inline-block">
-          <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             {profileData.profileImage ? (
               <img
                 src={profileData.profileImage}
@@ -368,12 +342,12 @@ const Profile = () => {
                 className="w-full h-full rounded-2xl object-cover"
               />
             ) : (
-              <span className="text-white font-bold text-2xl">
+              <span className="text-white font-bold text-xl sm:text-2xl">
                 {profileData.name?.charAt(0) || 'U'}
               </span>
             )}
           </div>
-          <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white cursor-pointer">
+          <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-primary-700 transition-colors">
             <Camera size={16} />
             <input
               type="file"
@@ -393,15 +367,15 @@ const Profile = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <h3 className="text-lg font-bold text-gray-800 dark:text-white">Personal Information</h3>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl text-sm sm:text-base"
           >
             {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
             <span>{isEditing ? 'Save' : 'Edit'}</span>
@@ -416,7 +390,7 @@ const Profile = () => {
               value={profileData.name}
               onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
               disabled={!isEditing}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50 text-sm sm:text-base"
             />
           </div>
 
@@ -426,7 +400,7 @@ const Profile = () => {
               type="email"
               value={profileData.email}
               disabled
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white opacity-50"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white opacity-50 text-sm sm:text-base"
             />
           </div>
 
@@ -437,7 +411,7 @@ const Profile = () => {
               value={profileData.dateOfBirth}
               onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
               disabled={!isEditing}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50 text-sm sm:text-base"
             />
           </div>
 
@@ -448,18 +422,18 @@ const Profile = () => {
               value={profileData.mobile}
               onChange={(e) => setProfileData({ ...profileData, mobile: e.target.value })}
               disabled={!isEditing}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white disabled:opacity-50 text-sm sm:text-base"
             />
           </div>
         </div>
 
         {isEditing && (
-          <div className="flex space-x-3 mt-6">
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-6">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSaveProfile}
-              className="flex-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium"
+              className="flex-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm sm:text-base"
             >
               Save Changes
             </motion.button>
@@ -467,7 +441,7 @@ const Profile = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setIsEditing(false)}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm sm:text-base"
             >
               Cancel
             </motion.button>
@@ -482,37 +456,49 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
       >
         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">App Preferences</h3>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {darkMode ? <Moon size={20} /> : <Sun size={20} />}
-              <div>
-                <p className="font-medium text-gray-800 dark:text-white">Dark Mode</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Toggle between light and dark theme</p>
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              {preferences.theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+              <div className="min-w-0">
+                <p className="font-medium text-gray-800 dark:text-white">Theme</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Choose your preferred theme</p>
               </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleDarkMode}
-              className={`w-12 h-6 rounded-full transition-all ${darkMode ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full transition-all ${darkMode ? 'translate-x-6' : 'translate-x-0.5'
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 flex-shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setPreferences({ ...preferences, theme: 'light' })}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${preferences.theme === 'light'
+                  ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300'
                   }`}
-              />
-            </motion.button>
+              >
+                Light
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setPreferences({ ...preferences, theme: 'dark' })}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${preferences.theme === 'dark'
+                  ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300'
+                  }`}
+              >
+                Dark
+              </motion.button>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
               <Bell size={20} />
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium text-gray-800 dark:text-white">Notifications</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Receive study reminders and updates</p>
               </div>
@@ -521,7 +507,7 @@ const Profile = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setPreferences({ ...preferences, notifications: !preferences.notifications })}
-              className={`w-12 h-6 rounded-full transition-all ${preferences.notifications ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+              className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${preferences.notifications ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
             >
               <div
@@ -535,7 +521,7 @@ const Profile = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSavePreferences}
-            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium"
+            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm sm:text-base"
           >
             Save Settings
           </motion.button>
@@ -549,7 +535,7 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
       >
         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Study Preferences</h3>
 
@@ -562,7 +548,7 @@ const Profile = () => {
               type="number"
               value={preferences.defaultStudyTime}
               onChange={(e) => setPreferences({ ...preferences, defaultStudyTime: parseInt(e.target.value) })}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm sm:text-base"
               min="15"
               max="300"
             />
@@ -575,7 +561,7 @@ const Profile = () => {
             <select
               value={preferences.preferredStudyTime}
               onChange={(e) => setPreferences({ ...preferences, preferredStudyTime: e.target.value })}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm sm:text-base"
             >
               {studyTimes.map((time) => (
                 <option key={time.value} value={time.value}>
@@ -609,7 +595,7 @@ const Profile = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSavePreferences}
-            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium"
+            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm sm:text-base"
           >
             Save Study Settings
           </motion.button>
@@ -620,25 +606,25 @@ const Profile = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-6 border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
       >
-        <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white mb-4">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
           Weekly Timetables ({timetables.length}/3)
         </h3>
 
         {timetables.length < 3 && (
-          <div className="mb-6 p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
             <h4 className="font-medium text-gray-800 dark:text-white mb-4">
               {editingTimetableId ? 'Edit Timetable' : 'Add New Timetable'}
             </h4>
 
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Timetable name..."
                 value={newTimetable.name}
                 onChange={(e) => setNewTimetable({ ...newTimetable, name: e.target.value })}
-                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm md:text-base"
+                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm sm:text-base"
               />
 
               <textarea
@@ -646,20 +632,20 @@ const Profile = () => {
                 value={newTimetable.description}
                 onChange={(e) => setNewTimetable({ ...newTimetable, description: e.target.value })}
                 rows={2}
-                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-white resize-none text-sm md:text-base"
+                className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-white resize-none text-sm sm:text-base"
               />
 
               <div className="space-y-4">
                 {daysOfWeek.map((day) => (
                   <div key={day} className="space-y-3">
-                    <h5 className="text-sm md:text-md font-semibold text-gray-700 dark:text-gray-300 capitalize border-b border-gray-200 dark:border-gray-600 pb-1">
+                    <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize border-b border-gray-200 dark:border-gray-600 pb-1">
                       {day}
                     </h5>
 
                     {(newTimetable.schedule[day] || []).map((slot, index) => (
                       <div key={index} className="space-y-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                          <div className="flex space-x-2 sm:space-x-3">
+                        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
+                          <div className="flex space-x-2">
                             <input
                               type="time"
                               value={slot.time}
@@ -671,7 +657,7 @@ const Profile = () => {
                               placeholder="Min"
                               value={slot.duration}
                               onChange={(e) => updateDaySlot(day, index, 'duration', parseInt(e.target.value))}
-                              className="w-16 sm:w-20 p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm"
+                              className="w-16 p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm"
                               min="15"
                               max="300"
                             />
@@ -715,7 +701,7 @@ const Profile = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddTimetable}
-                className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm md:text-base"
+                className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm sm:text-base"
               >
                 {editingTimetableId ? 'Update Timetable' : 'Add Timetable'}
               </motion.button>
@@ -730,16 +716,16 @@ const Profile = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-xl"
+              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
-                <div className="flex-1">
+              <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-1">
-                    <h4 className="font-medium text-gray-800 dark:text-white text-sm md:text-base">
+                    <h4 className="font-medium text-gray-800 dark:text-white text-sm sm:text-base truncate">
                       {timetable.name}
                     </h4>
                     {timetable.isActive && (
-                      <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-600 text-xs font-medium rounded-full">
+                      <div className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-600 text-xs font-medium rounded-full flex-shrink-0">
                         Active
                       </div>
                     )}
@@ -750,7 +736,7 @@ const Profile = () => {
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Weekly schedule</p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   {!timetable.isActive && (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -783,16 +769,6 @@ const Profile = () => {
                   </motion.button>
                 </div>
               </div>
-
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 sm:hidden">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {Object.entries(timetable.schedule || {}).slice(0, 4).map(([day, slots]) => (
-                    <div key={day} className="text-gray-600 dark:text-gray-300">
-                      <span className="font-medium capitalize">{day.slice(0, 3)}:</span> {slots.length} slots
-                    </div>
-                  ))}
-                </div>
-              </div>
             </motion.div>
           ))}
         </div>
@@ -805,7 +781,7 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700"
       >
         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Change Password</h3>
 
@@ -816,7 +792,7 @@ const Profile = () => {
               type="password"
               value={passwordData.currentPassword}
               onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm sm:text-base"
             />
           </div>
 
@@ -826,7 +802,7 @@ const Profile = () => {
               type="password"
               value={passwordData.newPassword}
               onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm sm:text-base"
             />
           </div>
 
@@ -838,7 +814,7 @@ const Profile = () => {
               type="password"
               value={passwordData.confirmPassword}
               onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm sm:text-base"
             />
           </div>
 
@@ -846,7 +822,7 @@ const Profile = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleChangePassword}
-            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium"
+            className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-medium text-sm sm:text-base"
           >
             Change Password
           </motion.button>
@@ -857,89 +833,23 @@ const Profile = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-6 border border-red-200 dark:border-red-800"
+        className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-4 sm:p-6 border border-red-200 dark:border-red-800"
       >
         <h3 className="text-lg font-bold text-red-600 mb-4">Danger Zone</h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+            <div className="flex-1 min-w-0">
               <p className="font-medium text-red-600">Deactivate Account</p>
               <p className="text-sm text-red-500">This will temporarily disable your account</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-red-600 text-white rounded-xl font-medium"
+              className="px-4 py-2 bg-red-600 text-white rounded-xl font-medium text-sm sm:text-base flex-shrink-0"
             >
               Deactivate
             </motion.button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-
-  const renderHelpTab = () => (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700"
-      >
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Help & Support</h3>
-        
-        <div className="space-y-4">
-          <Link
-            to="/help"
-            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <HelpCircle className="text-primary-600" size={20} />
-              <div>
-                <h4 className="font-medium text-gray-800 dark:text-white">Help Center</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300">FAQs and user guides</p>
-              </div>
-            </div>
-            <span className="text-gray-400">→</span>
-          </Link>
-
-          <Link
-            to="/about"
-            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              <Info className="text-primary-600" size={20} />
-              <div>
-                <h4 className="font-medium text-gray-800 dark:text-white">About Focus Vault</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Learn more about our mission</p>
-              </div>
-            </div>
-            <span className="text-gray-400">→</span>
-          </Link>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl p-6 border border-primary-200 dark:border-primary-800"
-      >
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">App Information</h3>
-        
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-300">Version</span>
-            <span className="font-medium text-gray-800 dark:text-white">1.0.0</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-300">Last Updated</span>
-            <span className="font-medium text-gray-800 dark:text-white">January 2025</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-300">Platform</span>
-            <span className="font-medium text-gray-800 dark:text-white">Progressive Web App</span>
           </div>
         </div>
       </motion.div>
@@ -951,21 +861,30 @@ const Profile = () => {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0"
       >
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Profile</h1>
           <p className="text-gray-600 dark:text-gray-300">Manage your account and preferences</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={logout}
-          className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-xl"
-        >
-          <LogOut size={16} />
-          <span>Sign Out</span>
-        </motion.button>
+        <div className="flex items-center space-x-3 flex-shrink-0">
+          <Link
+            to="/about"
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors text-sm sm:text-base"
+          >
+            <Info size={16} />
+            <span>About</span>
+          </Link>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={logout}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm sm:text-base"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </motion.button>
+        </div>
       </motion.div>
 
       <div className="overflow-x-auto">
@@ -976,13 +895,13 @@ const Profile = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all duration-200 ${activeTab === tab.id
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all duration-200 text-sm sm:text-base ${activeTab === tab.id
                 ? 'bg-gradient-to-r from-primary-600 to-secondary-600 text-white shadow-lg'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
                 }`}
             >
               <tab.icon size={16} />
-              <span className="text-sm">{tab.label}</span>
+              <span>{tab.label}</span>
             </motion.button>
           ))}
         </div>
@@ -993,7 +912,6 @@ const Profile = () => {
         {activeTab === 'settings' && renderSettingsTab()}
         {activeTab === 'study' && renderStudyTab()}
         {activeTab === 'security' && renderSecurityTab()}
-        {activeTab === 'help' && renderHelpTab()}
       </div>
     </div>
   );

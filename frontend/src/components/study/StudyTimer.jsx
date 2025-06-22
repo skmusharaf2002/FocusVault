@@ -11,13 +11,12 @@ const StudyTimer = () => {
     isStudying,
     activeSessions,
     startStudySession,
-    pauseSession,
     resumeSession,
     updateSessionTime,
     endSession,
     studyData,
     fetchDashboardAndTimetables,
-    getPausedSessions,
+    pauseSession,
     getSessionBySubject,
     fetchCompletedSubjects
   } = useStudy();
@@ -180,7 +179,7 @@ const StudyTimer = () => {
 
   const todaySchedule = getTodaySchedule();
   const completedSubjects = studyData.completedSubjects || [];
-  const pausedSessions = getPausedSessions();
+  const pausedSessions = pauseSession();
 
   const getSubjectStatus = (subject) => {
     const completed = completedSubjects.find(s => s.subject === subject && s.completed);
