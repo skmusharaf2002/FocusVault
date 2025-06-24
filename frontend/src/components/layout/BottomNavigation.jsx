@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, BookOpen, CheckSquare, Calendar, User, HelpCircle } from 'lucide-react';
+import { Home, BookOpen, CheckSquare, Calendar, User, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const BottomNavigation = () => {
@@ -8,6 +8,7 @@ const BottomNavigation = () => {
     { path: '/reading', icon: BookOpen, label: 'Reading' },
     { path: '/todo', icon: CheckSquare, label: 'ToDo' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
+    { path: '/rankings', icon: Trophy, label: 'Rankings' },
     { path: '/profile', icon: User, label: 'Profile' }
   ];
 
@@ -19,10 +20,9 @@ const BottomNavigation = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[60px] ${
-                isActive
-                  ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-primary-500'
+              `flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[50px] ${isActive
+                ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20'
+                : 'text-gray-500 dark:text-gray-400 hover:text-primary-500'
               }`
             }
           >
@@ -32,7 +32,7 @@ const BottomNavigation = () => {
                   animate={{ scale: isActive ? 1.1 : 1 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                 </motion.div>
                 <span className={`text-xs mt-1 font-medium ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`}>
                   {item.label}
